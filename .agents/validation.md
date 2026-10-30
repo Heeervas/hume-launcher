@@ -12,7 +12,7 @@ Never commit keys, machine-specific paths, device addresses, downloaded tools or
 
 ## Build
 
-`VERSION_CODE=7801 VERSION_NAME=7.8-madrid.1 ./build.sh`
+`VERSION_CODE=7802 VERSION_NAME=7.8-madrid.2 ./build.sh`
 
 Use an isolated private signing key. Set RELEASE_KEYSTORE, RELEASE_KEYSTORE_PASS and
 RELEASE_KEY_ALIAS for that local fork key; these are not the upstream release credentials.
@@ -58,7 +58,8 @@ Resolve them from Maven Central; set TEST_JSON_JAR and TEST_XML_JAR to their ver
 
 The checks invoke the actual Search/Suggestions request producers, selection migration,
 weather seeding and News RSS parser. They cover quoted/accented queries, unrestricted versus
-explicit original-language filtering, removed-only/mixed/empty selections, idempotence,
+explicit original-language filtering, Android TV link priority with intact extras, rejection of
+system-chooser/browser service packages (including saved associations), removed-only/mixed/empty selections, idempotence,
 preserved credentials/shelf choices, manual/automatic/disabled weather and stale/imageless/
 malformed feed entries. Live mode calls JustWatch Spain, requires nonempty title edges and
 at least one offer matching each configured provider's technical name, and parses all configured feeds.

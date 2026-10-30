@@ -47,6 +47,25 @@ public final class RegionalChecks {
         require(SearchPanel.SPANISH.contains("\u00f1") && SearchPanel.SPANISH.contains("\u00e1"), "Spanish character input");
     }
 
+    static void titleRouting() {
+        Search.Offer netflix = new Search.Offer();
+        netflix.web = "https://www.netflix.com/title/80176893";
+        netflix.deeplink = "intent://www.netflix.com/watch/80176893#Intent;launchFlags=0x00800000;scheme=https;package=com.netflix.ninja;S.source=30;end";
+        require(Search.titleLinks(netflix).equals(Arrays.asList(netflix.deeplink, netflix.web)),
+                "Android TV title link, including source extras, must precede the web fallback");
+        netflix.deeplink = "";
+        require(Search.titleLinks(netflix).equals(Arrays.asList(netflix.web)), "Web-only offer remains usable");
+        netflix.web = "";
+        require(Search.titleLinks(netflix).isEmpty(), "An offer without links must reach app-search/launch fallback");
+        Search.Apps apps = new Search.Apps();
+        apps.browsers.add("test.browser");
+        require(Search.servicePackage("android", apps).isEmpty(),
+                "Android's resolver must never be accepted or restored as a service package");
+        require(Search.servicePackage("test.browser", apps).isEmpty(), "A browser is not the streaming app");
+        require(Search.servicePackage("com.movistarplus.androidtv", apps).equals("com.movistarplus.androidtv"),
+                "A real service package must remain eligible");
+    }
+
     static void selections() {
         MemoryPreferences old = new MemoryPreferences();
         old.values.put("providers", set("2336", "232"));
@@ -157,6 +176,7 @@ public final class RegionalChecks {
 
     public static void main(String[] args) throws Exception {
         requests();
+        titleRouting();
         selections();
         weather();
         feedFixture();

@@ -307,6 +307,11 @@ final class Search {
     /** Service -> "app|app to get", for the life of one search screen (apps may be installed in between). */
     static final Map<String, String> RESOLVED = java.util.Collections.synchronizedMap(new HashMap<>());
 
+    /** A browser or the system's chooser is not the streaming service's app. */
+    static String servicePackage(String pkg, Apps apps) {
+        return pkg == null || "android".equals(pkg) || apps.browsers.contains(pkg) ? "" : pkg;
+    }
+
     static void resolve(Context c, Offer o, Apps apps) {
         String memo = RESOLVED.get(o.tech);
         if (memo != null) {
@@ -323,11 +328,12 @@ final class Search {
                 if (i.getPackage() != null) named = i.getPackage();
                 if (named.isEmpty()) {
                     ResolveInfo r = pm.resolveActivity(i, 0);
-                    if (r != null && !apps.browsers.contains(r.activityInfo.packageName)) named = r.activityInfo.packageName;
+                    if (r != null) named = r.activityInfo.packageName;
                 }
             } catch (Exception ignored) {
             }
         }
+        named = servicePackage(named, apps);
         if (!named.isEmpty() && Suggestions.installed(c, named)) o.pkg = named;
         if (o.pkg.isEmpty() && !o.web.isEmpty()) {
             ResolveInfo r = pm.resolveActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(o.web)), 0);
@@ -335,7 +341,7 @@ final class Search {
                     && !"android".equals(r.activityInfo.packageName)) o.pkg = r.activityInfo.packageName;
         }
         if (o.pkg.isEmpty()) {
-            String saved = prefs(c).getString(K_APP + o.tech, "");
+            String saved = servicePackage(prefs(c).getString(K_APP + o.tech, ""), apps);
             if (!saved.isEmpty() && Suggestions.installed(c, saved)) o.pkg = saved;
         }
         if (o.pkg.isEmpty()) o.pkg = byName(o.service, apps);
@@ -368,9 +374,17 @@ final class Search {
 
     // ------------------------------------------------------------------ opening
 
+    /** Ordered title routes, consumed by the real Android opener. */
+    static List<String> titleLinks(Offer offer) {
+        List<String> links = new ArrayList<>();
+        if (!offer.deeplink.isEmpty()) links.add(offer.deeplink);
+        if (!offer.web.isEmpty() && !offer.web.equals(offer.deeplink)) links.add(offer.web);
+        return links;
+    }
+
     /**
-     * Opens the title in the offer's app as directly as it allows: the title's page on the
-     * service (in the app), JustWatch's Android TV link, the app's own search, or the app itself.
+     * Opens the Android TV title link first (preserving its extras), then the service's web
+     * page in the app, the app's own search, or the app itself.
      */
     static void open(Context c, Title t, Offer o) {
         if (o.monetization.equals("STREMIO")) {
@@ -383,15 +397,18 @@ final class Search {
         }
         PackageManager pm = c.getPackageManager();
         List<Intent> tries = new ArrayList<>();
-        if (!o.web.isEmpty()) tries.add(Suggestions.view(o.web, o.pkg));
-        if (!o.deeplink.isEmpty()) {
-            try {
-                Intent i = Intent.parseUri(o.deeplink, Intent.URI_INTENT_SCHEME);
-                i.setSelector(null);
-                i.setComponent(null);
-                i.setPackage(o.pkg);
-                tries.add(i);
-            } catch (Exception ignored) {
+        for (String link : titleLinks(o)) {
+            if (link.equals(o.deeplink)) {
+                try {
+                    Intent i = Intent.parseUri(link, Intent.URI_INTENT_SCHEME);
+                    i.setSelector(null);
+                    i.setComponent(null);
+                    i.setPackage(o.pkg);
+                    tries.add(i);
+                } catch (Exception ignored) {
+                }
+            } else {
+                tries.add(Suggestions.view(link, o.pkg));
             }
         }
         tries.add(new Intent(Intent.ACTION_SEARCH).setPackage(o.pkg).putExtra(SearchManager.QUERY, t.title));
