@@ -26,8 +26,8 @@ import java.util.TimeZone;
 /**
  * Current weather and a 5-day forecast from free services that need no key: Open-Meteo,
  * MET Norway (Yr) and wttr.in. The chosen source is tried first and the others are fallbacks.
- * The location comes from the internet address (ipapi.co, ipwho.is, geojs.io) unless a city is
- * chosen in Settings. Every source is stored in one format, cached, and refreshed on a schedule
+ * Madrid is the initial location; explicit automatic-location and chosen-city settings are
+ * preserved. Automatic location uses ipapi.co, ipwho.is and geojs.io. Every source is stored in one format, cached, and refreshed on a schedule
  * (every 15 minutes by default).
  */
 final class Weather {
@@ -44,7 +44,9 @@ final class Weather {
     }
 
     static SharedPreferences prefs(Context c) {
-        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        Regional.seedWeather(p);
+        return p;
     }
 
     static boolean enabled(Context c) {
@@ -166,8 +168,9 @@ final class Weather {
      * today ("Today" first), and today's high/low. Null when nothing has loaded yet.
      */
     static Data cached(Context c) {
-        String raw = prefs(c).getString(K_CACHE, null);
-        if (raw == null) return null;
+        SharedPreferences p = prefs(c);
+        String raw = p.getString(K_CACHE, null);
+        if (raw == null || !key(c).equals(p.getString(K_CACHE_KEY, ""))) return null;
         try {
             return present(c, Data.fromJson(new JSONObject(raw)));
         } catch (Exception e) {
@@ -539,7 +542,7 @@ final class Weather {
 
     /** City search for Settings (Open-Meteo geocoding). Call off the main thread. */
     static List<Place> search(String q) throws Exception {
-        JSONObject j = new JSONObject(get("https://geocoding-api.open-meteo.com/v1/search?count=8&language=en&name="
+        JSONObject j = new JSONObject(get("https://geocoding-api.open-meteo.com/v1/search?count=8&language=es&name="
                 + URLEncoder.encode(q.trim(), "UTF-8")));
         List<Place> out = new ArrayList<>();
         JSONArray a = j.optJSONArray("results");

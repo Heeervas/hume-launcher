@@ -39,7 +39,7 @@ Key files (full map in **[docs/architecture.md](docs/architecture.md)**):
 | `MainActivity.java` | Home: dock/grid, focus, carousel, status row, Control Center, profiles UI, Liquid Glass, idle mode |
 | `SettingsActivity.java` | Settings pages |
 | `SetupActivity.java` | First-time setup pages |
-| `Suggestions.java`, `News.java` | Carousel content (JustWatch/TMDB/Stremio recommendations, Indian news RSS) |
+| `Suggestions.java`, `News.java` | Carousel content (JustWatch/TMDB/Stremio recommendations, Spanish national/Madrid/world news RSS) |
 | `Search.java`, `SearchPanel.java` | Search: titles on every service with Open / Get, apps and settings; the search screen |
 | `WatchNext.java` | Continue Watching from apps' Watch Next rows |
 | `AppRows.java`, `Carousel.java` | Apps' own rows; composing the carousel from all its sources |
@@ -48,7 +48,8 @@ Key files (full map in **[docs/architecture.md](docs/architecture.md)**):
 | `MediaWatchService.java` | Notification listener for Do Not Disturb |
 | `Weather*.java` | Weather data, pill and forecast panel, icons |
 | `Perms.java`, `PowerService.java` | On-screen permission flows; accessibility service for Power Off / Clean / Home button / wake |
-| `AirPlayGuard.java`, `Inputs.java`, `Clicks.java`, `Profiles.java` | AirPlay watchdog, TV inputs, sounds, profiles |
+| `AirPlay.java`, `Inputs.java`, `Clicks.java`, `Profiles.java` | Explicit separate-receiver setup, TV inputs, sounds, profiles |
+| `Regional.java` | Spain metadata, selection migration and Madrid initial weather defaults |
 | `Ui.java`, `Glyphs.java` | Sizing (960×540 design grid), fonts, glyphs drawn in code |
 
 Features are described in **[docs/features.md](docs/features.md)**.
@@ -148,7 +149,15 @@ Include the numbers in your PR. `--es perf <layer>` (see getting-started) helps 
 
 ## 7. Testing a change
 
-There is no automated test suite yet; changes are verified on devices. For every change:
+The Madrid fork has host regional checks in `checks/run_regional_checks.sh`; they do not replace
+Android UI or playback checks. The upstream broad-compatibility process is retained below.
+For this personal fork's initial deployment, the owner explicitly approved a narrower
+Chromecast 4K (`sabrina`), Android 14 trial. Android 9/12 remain **unverified**, not passed;
+this exception does not establish general device compatibility. Record the actual display
+resolution tested and any untested 720p/1080p states rather than claiming equivalence.
+See `.agents/validation.md` for source checks and the device acceptance contract.
+
+For every change, subject to that explicitly bounded compatibility exception:
 
 1. `./build.sh` succeeds with no new warnings you introduced.
 2. Install and exercise the change with the remote (or `adb shell input keyevent …`), including
@@ -179,7 +188,7 @@ follow §6, code follows §3.
 ## 9. Good first areas
 
 - New weather icons (`WeatherIcons.java`) or connector icons (`Glyphs.java`).
-- More Indian city news feeds (`News.java`, `TOI_CITIES` and the city slugs).
+- Verified Spanish feeds with image/date formats supported by `News.java`; local news is fixed Madrid.
 - More streaming services for recommendations (`Suggestions.java`, `PROVIDERS`).
 - Translations of setup and Settings text (no i18n yet — a good larger project).
 - Automated checks: a script that builds and lints, or JVM tests for the parsers (weather, news,

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Top-shelf suggestions: what's popular in India on the user's streaming services, from TMDB
+ * Top-shelf suggestions: what's popular in Spain on the user's streaming services, from TMDB
  * (themoviedb.org). Results and artwork are cached on disk; everything here runs off the UI thread.
  */
 final class Suggestions {
@@ -52,7 +52,7 @@ final class Suggestions {
     /** POOL titles are fetched per service; PER_SOURCE of them are picked at random each refresh. */
     static final int PER_SOURCE = 3, POOL = 20, MAX_ITEMS = 10;
 
-    /** A streaming service available in India: TMDB provider id, display name, Android TV package. */
+    /** A streaming service available in Spain: TMDB provider id, display name, Android TV package. */
     static final class Provider {
         final int id;
         final String name, pkg, jwShort, jwTech;
@@ -69,10 +69,11 @@ final class Suggestions {
     static final List<Provider> PROVIDERS = Arrays.asList(
             new Provider(8, "Netflix", "com.netflix.ninja", "nfx", "netflix"),
             new Provider(119, "Prime Video", "com.amazon.amazonvideo.livingroom", "prv", "amazonprimevideo"),
-            new Provider(2336, "JioHotstar", "in.startv.hotstar", "jhs", "jiohotstar"),
+            new Provider(337, "Disney+", "com.disney.disneyplus", "dnp", "disneyplus"),
             new Provider(350, "Apple TV", "com.apple.atve.androidtv.appletv", "atp", "appletvplus"),
-            new Provider(232, "ZEE5", "com.graymatrix.did", "zee", "zee5"),
-            new Provider(237, "SonyLIV", "com.sonyliv", "snl", "sonyliv"));
+            new Provider(1899, "HBO Max", "com.hbo.hbonow", "mxx", "max"),
+            new Provider(63, "Filmin", "com.filmin.androidtv", "fil", "filmin"),
+            new Provider(149, "Movistar Plus+", "com.movistarplus.androidtv", "mp9", "movistarott"));
 
     /**
      * Apps that open Cinemeta titles by IMDb id. Not streaming services, so they never appear in
@@ -83,8 +84,8 @@ final class Suggestions {
             NUVIO = new Provider(NUVIO_ID, "Nuvio", "com.nuvio.tv", "", "");
 
     /** Original-language filters offered in settings (TMDB ISO 639-1 codes). */
-    static final String[] LANG_CODES = {"hi", "en", "ta", "te", "ml", "kn", "bn", "mr"};
-    static final String[] LANG_NAMES = {"Hindi", "English", "Tamil", "Telugu", "Malayalam", "Kannada", "Bengali", "Marathi"};
+    static final String[] LANG_CODES = {"es", "en", "ca", "eu", "gl", "fr", "de", "it", "pt", "ja", "ko"};
+    static final String[] LANG_NAMES = {"Spanish", "English", "Catalan", "Basque", "Galician", "French", "German", "Italian", "Portuguese", "Japanese", "Korean"};
 
     static final class Item {
         int id, providerId;
@@ -140,7 +141,9 @@ final class Suggestions {
     // ------------------------------------------------------------------ settings
 
     static SharedPreferences prefs(Context c) {
-        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        Regional.migrateSelections(p);
+        return p;
     }
 
     /** What this profile's top shelf shows (each profile chooses; older global setting as fallback). */
@@ -240,7 +243,7 @@ final class Suggestions {
 
     /** One cache per content mix, so profiles with different choices don't overwrite each other. */
     static File cacheFile(Context c) {
-        return new File(c.getFilesDir(), "suggestions_" + shelf(c) + ".json");
+        return new File(c.getFilesDir(), "suggestions_" + Regional.CONTENT + "_" + shelf(c) + ".json");
     }
 
     /** Cached list, or null when missing/stale. */
@@ -316,7 +319,18 @@ final class Suggestions {
             + " title originalReleaseYear shortDescription genres { shortName } backdrops { backdropUrl } scoring { imdbScore } }"
             + " offers(country: $country, platform: WEB) { standardWebURL package { technicalName } } } } } }";
 
-    /** What's popular in India per service, from JustWatch's public GraphQL endpoint (no key). */
+    /** Wire request for one service and content kind, using the same Spain metadata as Search. */
+    static JSONObject justWatchRequest(Provider p, String kind) throws Exception {
+        JSONObject filter = new JSONObject()
+                .put("packages", new JSONArray().put(p.jwShort))
+                .put("objectTypes", new JSONArray().put(kind.equals("tv") ? "SHOW" : "MOVIE"))
+                .put("monetizationTypes", new JSONArray().put("FLATRATE").put("FREE").put("ADS"));
+        JSONObject vars = new JSONObject().put("country", Regional.COUNTRY).put("language", Regional.LANGUAGE)
+                .put("first", POOL).put("filter", filter);
+        return new JSONObject().put("query", JW_QUERY).put("variables", vars);
+    }
+
+    /** What's popular in Spain per service, from JustWatch's public GraphQL endpoint (no key). */
     static List<List<Item>> fetchJustWatch(Context c) throws Exception {
         String t = types(c);
         List<String> kinds = t.equals("both") ? Arrays.asList("tv", "movie") : Arrays.asList(t);
@@ -325,13 +339,7 @@ final class Suggestions {
         for (Provider p : PROVIDERS) {
             if (!provs.contains(String.valueOf(p.id))) continue;
             for (String kind : kinds) {
-                JSONObject filter = new JSONObject()
-                        .put("packages", new JSONArray().put(p.jwShort))
-                        .put("objectTypes", new JSONArray().put(kind.equals("tv") ? "SHOW" : "MOVIE"))
-                        .put("monetizationTypes", new JSONArray().put("FLATRATE").put("FREE").put("ADS"));
-                JSONObject vars = new JSONObject().put("country", "IN").put("language", "en")
-                        .put("first", POOL).put("filter", filter);
-                JSONObject body = new JSONObject().put("query", JW_QUERY).put("variables", vars);
+                JSONObject body = justWatchRequest(p, kind);
                 JSONObject res = post("https://apis.justwatch.com/graphql", body.toString());
                 JSONArray edges = res.getJSONObject("data").getJSONObject("popularTitles").getJSONArray("edges");
                 List<Item> list = new ArrayList<>();
@@ -464,11 +472,7 @@ final class Suggestions {
         for (Provider p : PROVIDERS) {
             if (!provs.contains(String.valueOf(p.id))) continue;
             for (String kind : kinds) {
-                StringBuilder q = new StringBuilder("/discover/").append(kind)
-                        .append("?watch_region=IN&with_watch_monetization_types=flatrate&sort_by=popularity.desc")
-                        .append("&language=en-IN&include_adult=false&with_watch_providers=").append(p.id);
-                if (!langs.isEmpty()) q.append("&with_original_language=").append(URLEncoder.encode(String.join("|", langs), "UTF-8"));
-                JSONArray results = get(c, q.toString()).optJSONArray("results");
+                JSONArray results = get(c, tmdbPath(kind, p.id, langs)).optJSONArray("results");
                 List<Item> list = new ArrayList<>();
                 for (int i = 0; results != null && i < results.length() && list.size() < POOL; i++) {
                     JSONObject r = results.getJSONObject(i);
@@ -493,19 +497,29 @@ final class Suggestions {
         return sources;
     }
 
-    /** Title-treatment logo for an item (English preferred), fetched once and cached in the list. */
+    /** TMDB availability is Spain-specific; metadata language does not restrict original language. */
+    static String tmdbPath(String kind, int provider, Set<String> languages) throws Exception {
+        String path = "/discover/" + kind + "?watch_region=" + Regional.COUNTRY
+                + "&with_watch_monetization_types=flatrate&sort_by=popularity.desc&language=" + Regional.LOCALE
+                + "&include_adult=false&with_watch_providers=" + provider;
+        if (!languages.isEmpty()) path += "&with_original_language="
+                + URLEncoder.encode(String.join("|", languages), "UTF-8");
+        return path;
+    }
+
+    /** Title-treatment logo for an item (Spanish preferred), fetched once and cached in the list. */
     static String logoFor(Context c, Item it) {
         if (it.logo != null) return it.logo;
         if (!source(c).equals(SRC_TMDB)) return "";
         try {
-            JSONArray logos = get(c, "/" + it.type + "/" + it.id + "/images?include_image_language=en,hi,null")
+            JSONArray logos = get(c, "/" + it.type + "/" + it.id + "/images?include_image_language=es,en,null")
                     .optJSONArray("logos");
             String best = "";
             for (int i = 0; logos != null && i < logos.length(); i++) {
                 JSONObject l = logos.getJSONObject(i);
-                if (best.isEmpty() || "en".equals(l.optString("iso_639_1"))) {
+                if (best.isEmpty() || Regional.LANGUAGE.equals(l.optString("iso_639_1"))) {
                     best = l.optString("file_path");
-                    if ("en".equals(l.optString("iso_639_1"))) break;
+                    if (Regional.LANGUAGE.equals(l.optString("iso_639_1"))) break;
                 }
             }
             it.logo = best;
@@ -516,13 +530,13 @@ final class Suggestions {
     }
 
     static Map<Integer, String> genres(Context c, String kind) {
-        File f = new File(c.getFilesDir(), "genres_" + kind + ".json");
+        File f = new File(c.getFilesDir(), "genres_" + Regional.CONTENT + "_" + kind + ".json");
         try {
             JSONObject o;
             if (f.exists()) {
                 o = new JSONObject(new String(readAll(new FileInputStream(f)), StandardCharsets.UTF_8));
             } else {
-                o = get(c, "/genre/" + kind + "/list?language=en");
+                o = get(c, "/genre/" + kind + "/list?language=" + Regional.LANGUAGE);
                 try (OutputStream os = new FileOutputStream(f)) {
                     os.write(o.toString().getBytes(StandardCharsets.UTF_8));
                 }
@@ -685,10 +699,7 @@ final class Suggestions {
         switch (p.id) {
             case 8: tries.add(view("https://www.netflix.com/search?q=" + enc, p.pkg)); break;
             case 119: tries.add(view("https://www.primevideo.com/search/?phrase=" + enc, p.pkg)); break;
-            case 2336: tries.add(view("https://www.hotstar.com/in/search?q=" + enc, p.pkg)); break;
             case 350: tries.add(view("https://tv.apple.com/search?term=" + enc, p.pkg)); break;
-            case 232: tries.add(view("https://www.zee5.com/search?q=" + enc, p.pkg)); break;
-            case 237: tries.add(view("https://www.sonyliv.com/search?searchTerm=" + enc, p.pkg)); break;
             default: break;
         }
         PackageManager pm = c.getPackageManager();

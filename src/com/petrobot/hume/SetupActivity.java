@@ -405,7 +405,7 @@ public class SetupActivity extends Activity {
         hi.setAlpha(0f);
         hi.setTranslationY(u(12));
         hi.animate().alpha(1f).translationY(0).setDuration(Motion.d(700)).start();
-        // "Welcome" in Indian and world languages, fading from one to the next.
+        // "Welcome" in world languages, fading from one to the next.
         String[] words = {"Welcome", "स्वागत है", "স্বাগতম", "வரவேற்கிறோம்", "స్వాగతం", "स्वागत आहे", "સ્વાગત છે", "ಸ್ವಾಗತ", "സ്വാഗതം", "ਜੀ ਆਇਆਂ ਨੂੰ", "Bienvenue", "Bienvenido", "Willkommen", "ようこそ", "Benvenuto", "Bem-vindo", "欢迎"};
         int[] k = {0};
         Runnable[] cycle = new Runnable[1];
@@ -550,7 +550,7 @@ public class SetupActivity extends Activity {
             r[0].set(recs[0]);
         });
         Row[] n = new Row[1];
-        n[0] = row(l, "News", "India, your city and the world, from Indian newsrooms", SWITCH, news[0], () -> {
+        n[0] = row(l, "News", "Spain, Madrid and the world, from Spanish newsrooms", SWITCH, news[0], () -> {
             news[0] = !news[0];
             Suggestions.setShelf(this, recs[0], news[0]);
             n[0].set(news[0]);

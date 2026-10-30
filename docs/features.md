@@ -18,7 +18,7 @@ option never skips a page. Each row shows what kind it is: an **On/Off switch**,
 (one of a list), or an **action** with its state on the right (*Allow ›*, *✓ Allowed*, *✓ Done*).
 Choices change in place, and the remote's Back key also goes back.
 
-1. **Welcome**, fading through Indian and world languages, then *Get Started*.
+1. **Welcome**, fading through world languages, then *Get Started*.
 2. **Create Your Profile**: name (shown on the row; OK edits it) and an emoji avatar (ringed when chosen).
 3. **Choose a Look**: backgrounds previewed live as you move; OK picks one (radio).
 4. **Your Home Screen** (this profile): switches for Recommendations, News, Continue Watching and
@@ -94,20 +94,19 @@ remote, the Search key on remotes that have one, or just start typing on a keybo
 Assistant/mic button on most Android TV remotes is taken by Google Assistant before any app sees
 it, so it can't open Hume's Search.)
 
-- **Keyboard**: a–z, space, delete, **123** (digits and punctuation), **अआ** (Hindi letters) and
+- **Keyboard**: a–z, space, delete, **123** (digits and punctuation), **ñá** (Spanish characters) and
   clear. A USB/Bluetooth keyboard and the remote's number keys type too.
 - **Dictation**: the **mic** beside the search field (Up from the keyboard), or the remote's
   search/mic button on Home or in Search. Where the TV has Google's voice service, the words appear
   in the field as you speak and results follow; the microphone is asked for on screen the first
   time. Esc on a keyboard, or Back, closes Search. Without that permission or service, the TV's own voice prompt (Google's) listens instead.
-  English and Hindi (Indian English, with Hindi as a second language).
+  Spanish (es-ES), with English as an additional language hint; actual recognition depends on the TV's service.
 - **Before typing**: your recent searches (per profile) and what's trending in the carousel.
 - **Apps & Settings** (instant, no internet): installed apps including hidden ones, TV inputs
   ("HDMI 2"), Hume screens (Control Center, Weather, Switch Profile, Hume Settings) and TV settings
   ("wifi", "bluetooth", "screensaver"…).
-- **Movies & TV**: every title on any streaming service in India from JustWatch — Hindi and
-  regional titles included, and searches typed in Hindi (पंचायत) work — as posters with the logos
-  of the services that have each one. With Stremio or Nuvio installed, **On Stremio** adds titles
+- **Movies & TV**: JustWatch titles and streaming offers for Spain, with Spanish metadata,
+  shown as posters with the logos of the services that have each one. With Stremio or Nuvio installed, **On Stremio** adds titles
   only Stremio's catalogue has. Titles are searched once typing pauses; repeat searches are
   instant.
 - **How to Watch**: OK on a poster opens the title's page (artwork, year, genres, IMDb rating,
@@ -149,19 +148,19 @@ Full-screen artwork behind the dock while a dock app is focused. One carousel ho
    placed for every two of these. A title appears once (Continue Watching, then an app's row,
    then a recommendation).
 
-- **Recommendations**: popular titles in India on your services. Source **JustWatch** (no key,
+- **Recommendations**: popular titles in Spain on your services. Source **JustWatch** (no key,
   unofficial API) or **TMDB** (free key). Each refresh picks at random from each service's top 20,
   so the set changes through the day (every 2 hours, or Refresh). **▶ Open** goes to the title's
   page in the app.
-- **Stremio** as the source instead: Cinemeta's popular movies and series (no key). **▶ Open**
+- **Stremio** as the source instead: Cinemeta's global popular movies and series (no key; not Spain availability-filtered). **▶ Open**
   goes to the title's page in **Stremio**, or in **[Nuvio](https://github.com/NuvioMedia/NuvioTV)**
   when only Nuvio is installed; **Get** opens Stremio on the Play Store. Settings → Top Shelf →
   Source; with Stremio chosen, *Opens in* shows which app will be used.
 
   ![Stremio as the source](images/settings-stremio.jpg)
-- **News**: India, local (your city, from the weather location) and world, from Indian newsrooms'
-  RSS feeds with large images: Times of India, Hindustan Times, The Indian Express, India Today and
-  News18 by default (NDTV and The Hindu optional). An editorial layout made for reading: headline,
+- **News**: Spain, fixed Madrid local news and world stories from El País and 20 Minutos RSS
+  feeds with images. Madrid news is independent of weather location; choosing another weather
+  city does not relabel Madrid stories. An editorial layout made for reading: headline,
   summary, section, newsroom and age; no button. Updates every 30 minutes (15/30/60).
 - Each profile chooses what it shows: Settings → **Top Shelf** has a switch for each source, in the
   carousel's order — Continue Watching, From Your Apps, Recommendations, News — then each one's
@@ -186,7 +185,10 @@ summary at the bottom. The first key press only brings the Home Screen back.
   as fallbacks. The panel shows which answered and when.
 - Updates every **15 minutes** by default (10/15/30/60), and when the internet returns. The last
   forecast is cached, so it shows instantly and offline.
-- Location from the internet address (ipapi.co → ipwho.is → geojs.io) unless you choose a city.
+- Madrid/Celsius are the initial defaults. Explicit automatic-location, city, units, source and
+  disabled-weather settings survive upgrades. Automatic location still uses ipapi.co → ipwho.is → geojs.io.
+- Forecast presentation uses the TV's timezone. This fork does not change the system clock/timezone.
+- Spain content and genre caches use a separate namespace, so old Indian content is not shown on upgrade.
 
 ## Control Center
 
@@ -266,12 +268,12 @@ Android TV can't receive AirPlay by itself. Install the free, open-source
 screen mirroring, video and audio. See [install.md](install.md#optional-airplay-receiver) to set it
 up. It appears in Hume like any other app.
 
-**AirPlay guard** (automatic, only when that app is installed): after long sleeps the AirPlay app
-can keep running without announcing itself, so the TV vanishes from AirPlay lists. On wake, when
-the network returns and every 15 minutes on Home, Hume asks the network (an mDNS query, as a Mac
-does) whether the receiver is visible; if not, it restarts the receiver's server through the app's
-settings receiver, or starts a stopped app through its start-up receiver. Nothing appears on screen.
-The receiver's name is set in the AirPlay app (e.g. "Mi Box").
+**Settings → AirPlay receiver** opens the installed app, or shows trusted download/setup guidance
+when it is absent. Configure startup, background behavior and permissions in the receiver itself.
+The upstream silent-repair watchdog was removed: receiver 0.0.36 protects its settings broadcasts
+with DUMP, which Hume does not request. No background polling, shell permission or automatic
+reconfiguration is used. Discovery does not by itself prove playback; Apple-client tests and
+wake/reboot behavior are separate checks. DRM playback is not guaranteed.
 
 ## Motion & sound
 

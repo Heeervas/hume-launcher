@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Search data: titles from JustWatch (every service in India, with each service's link) and
+ * Search data: titles from JustWatch (Spain availability, with each service's link) and
  * Stremio's Cinemeta catalogue, plus the generic matching of a streaming service to the app that
  * plays it. Nothing here touches views; network calls block and run off the UI thread.
  */
@@ -138,19 +138,24 @@ final class Search {
 
     // ------------------------------------------------------------------ titles
 
-    static final String JW_SEARCH = "query S($q: String!, $first: Int!) { popularTitles(country: IN, first: $first,"
+    static final String JW_SEARCH = "query S($q: String!, $first: Int!, $country: Country!, $language: Language!) { popularTitles(country: $country, first: $first,"
             + " filter: {searchQuery: $q}) { edges { node { objectType"
-            + " content(country: IN, language: \"en\") { title originalReleaseYear shortDescription"
+            + " content(country: $country, language: $language) { title originalReleaseYear shortDescription"
             + " posterUrl(profile: S332, format: JPG) backdrops(profile: S1440, format: JPG) { backdropUrl }"
-            + " genres { translation(language: \"en\") } externalIds { imdbId } scoring { imdbScore } }"
-            + " offers(country: IN, platform: WEB) { monetizationType standardWebURL deeplinkURL(platform: ANDROID_TV)"
+            + " genres { translation(language: $language) } externalIds { imdbId } scoring { imdbScore } }"
+            + " offers(country: $country, platform: WEB) { monetizationType standardWebURL deeplinkURL(platform: ANDROID_TV)"
             + " package { clearName technicalName icon(profile: S100, format: PNG) } } } } } }";
 
-    /** Titles matching q on any service in India (JustWatch), best match first. */
+    /** The actual wire request, shared by the search producer and boundary checks. */
+    static JSONObject request(String q) throws Exception {
+        JSONObject vars = new JSONObject().put("q", q).put("first", MAX_TITLES)
+                .put("country", Regional.COUNTRY).put("language", Regional.LANGUAGE);
+        return new JSONObject().put("query", JW_SEARCH).put("variables", vars);
+    }
+
+    /** Titles matching q on services in Spain (JustWatch), best match first. */
     static List<Title> titles(Context c, String q, Apps apps) throws Exception {
-        JSONObject vars = new JSONObject().put("q", q).put("first", MAX_TITLES);
-        JSONObject res = post("https://apis.justwatch.com/graphql",
-                new JSONObject().put("query", JW_SEARCH).put("variables", vars).toString());
+        JSONObject res = post("https://apis.justwatch.com/graphql", request(q).toString());
         JSONArray edges = res.getJSONObject("data").getJSONObject("popularTitles").getJSONArray("edges");
         List<Title> out = new ArrayList<>();
         for (int i = 0; i < edges.length(); i++) {

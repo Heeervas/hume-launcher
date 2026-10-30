@@ -258,6 +258,7 @@ public class SettingsActivity extends Activity {
             return missing == 0 ? "All allowed" : missing + " to allow";
         });
         nav(ABOUT, () -> "Version " + version());
+        row("AirPlay receiver", () -> AirPlay.installed(this) ? "Open" : "Set up", () -> AirPlay.open(this));
         row("TV Settings", () -> "", () -> Suggestions.start(this, new Intent(Settings.ACTION_SETTINGS)));
     }
 
@@ -369,7 +370,7 @@ public class SettingsActivity extends Activity {
                 return n == News.SOURCES.size() ? "All" : n + " selected";
             }, this::chooseNewsrooms);
             row("Local news for", () -> News.city(this).isEmpty() ? "Unknown" : News.city(this), () ->
-                    Toast.makeText(this, "Local news follows the weather location (Settings \u2192 Weather \u2192 Location).",
+                    Toast.makeText(this, "This fork uses a fixed Madrid local-news feed, independently of the weather location.",
                             Toast.LENGTH_LONG).show());
             row("Update news every", () -> News.refreshMinutes(this) + " minutes", () -> {
                 int[] mins = News.REFRESH_CHOICES;
@@ -442,7 +443,7 @@ public class SettingsActivity extends Activity {
                 .setPositiveButton("Done", (d, w) -> {
                     Set<String> ids = new java.util.HashSet<>();
                     for (int i = 0; i < on.length; i++) if (on[i]) ids.add(News.SOURCES.get(i).id);
-                    if (ids.isEmpty()) ids.add("toi");
+                    if (ids.isEmpty()) ids.addAll(Regional.NEWS);
                     News.setSources(this, ids);
                     Suggestions.changed(this);
                     refreshAll();
@@ -694,7 +695,7 @@ public class SettingsActivity extends Activity {
         row("Hume Launcher", () -> "Version " + version(), () -> { });
         row("Made by", () -> "Petrobot", () -> { });
         row("Weather", () -> Weather.sourceName(Weather.source(this)), () -> { });
-        row("News", () -> News.sources(this).size() + " Indian newsrooms", () -> { });
+        row("News", () -> News.sources(this).size() + " Spanish newsrooms", () -> { });
     }
 
     boolean screensaverAllowed() {

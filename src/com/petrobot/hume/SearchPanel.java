@@ -39,7 +39,7 @@ import java.util.concurrent.Executors;
 /**
  * Search, as on tvOS: the Home Screen blurred behind, what you typed at the top, a one-row
  * keyboard, and rows of results under it. Apps, settings and inputs match on every key press with
- * no network; movies and series (JustWatch, any service in India, and Stremio) are fetched once
+ * no network; movies and series (JustWatch Spain availability, and global Stremio) are fetched once
  * typing pauses. OK on a title opens its "How to Watch" sheet with an Open / Get button per app.
  *
  * Geometry in design units (960 x 540, half of Apple's 1920 x 1080 points): 48 side margin as the
@@ -51,10 +51,7 @@ final class SearchPanel {
     static final long DEBOUNCE_MS = 350;
     static final String LATIN = "abcdefghijklmnopqrstuvwxyz";
     static final String DIGITS = "1234567890.-'&:!?";
-    static final String HINDI = "अआइईउऊएऐओऔ"
-            + "कखगघचछजझटठडढण"
-            + "तथदधनपफबभमयरलव"
-            + "शषसहािीुूेैोौं्";
+    static final String SPANISH = "\u00f1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc";
 
     final MainActivity a;
     final FrameLayout layer;
@@ -180,7 +177,7 @@ final class SearchPanel {
     /** The one-row keyboard for the current mode, then space, delete, mode switches and the mic. */
     void buildKeys(String focusLabel) {
         keys.removeAllViews();
-        String chars = mode == 1 ? DIGITS : mode == 2 ? HINDI : LATIN;
+        String chars = mode == 1 ? DIGITS : mode == 2 ? SPANISH : LATIN;
         List<View> made = new ArrayList<>();
         for (int i = 0; i < chars.length(); i++) {
             String ch = String.valueOf(chars.charAt(i));
@@ -189,7 +186,7 @@ final class SearchPanel {
         made.add(key("space", a.dp(64), () -> type(" ")));
         made.add(key("⌫", a.dp(40), this::backspace));
         made.add(key(mode == 1 ? "abc" : "123", a.dp(48), () -> switchMode(mode == 1 ? 0 : 1)));
-        made.add(key(mode == 2 ? "abc" : "अआ", a.dp(48), () -> switchMode(mode == 2 ? 0 : 2)));
+        made.add(key(mode == 2 ? "abc" : "\u00f1\u00e1", a.dp(48), () -> switchMode(mode == 2 ? 0 : 2)));
         made.add(key("clear", a.dp(56), this::clear));
         View focus = made.get(0);
         for (View k : made) {
@@ -234,7 +231,7 @@ final class SearchPanel {
     void switchMode(int m) {
         int prev = mode;
         mode = m;
-        buildKeys(m != 0 ? "abc" : prev == 1 ? "123" : "\u0905\u0906");
+        buildKeys(m != 0 ? "abc" : prev == 1 ? "123" : "\u00f1\u00e1");
     }
 
     void type(String s) {
@@ -314,8 +311,8 @@ final class SearchPanel {
     Intent speechIntent() {
         return new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-                .putExtra("android.speech.extra.EXTRA_ADDITIONAL_LANGUAGES", new String[]{"hi-IN"})
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Regional.LOCALE)
+                .putExtra("android.speech.extra.EXTRA_ADDITIONAL_LANGUAGES", new String[]{"en-GB"})
                 .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
                 .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, a.getPackageName())
@@ -892,7 +889,7 @@ final class SearchPanel {
         }
         if (buttons.isEmpty()) {
             TextView none = a.text(14, Ui.font(a, "regular"), 0.7f);
-            none.setText("Not streaming in India right now.");
+            none.setText("Not streaming in Spain right now.");
             col.addView(none);
         }
         s.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));

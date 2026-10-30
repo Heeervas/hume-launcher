@@ -1,5 +1,10 @@
 # Install and set up
 
+This is the Spain/Madrid fork. It uses its own signing key and must not overwrite an
+upstream-signed installation by uninstalling it without the owner's consent. Keep signing
+material private and stable for future fork updates. Build/check requirements are in
+[.agents/validation.md](../.agents/validation.md).
+
 ## Requirements
 
 - An Android TV box on Android 7.0+ (tested on a Xiaomi Mi Box, `MIBOX4`, Android 12).
@@ -35,13 +40,12 @@ Press Home on the remote — Hume Launcher opens.
 it. Turn on **Hume's switch** (setup offers it, or Settings → Home → *Home button opens Hume*, or
 the TV's Settings → Accessibility → *Hume Launcher*). Whenever the TV's own home screen appears,
 Hume opens instead. The stock launcher stays installed, so the TV's quick settings, account
-screens and updates keep working. The old way still works if you prefer it:
+screens and updates keep working. This fork's installation keeps Google TV Home and the setup
+wizard enabled; no debloating, DNS changes or system-package disabling is required.
 
-```sh
-adb shell pm disable-user --user 0 com.google.android.apps.tv.launcherx   # Google TV
-adb shell pm disable-user --user 0 com.google.android.tungsten.setupwraith  # else it shows "Recovery" on Home
-adb shell pm disable-user --user 0 com.google.android.tvlauncher            # older Android TV
-```
+For wireless debugging, pair using the pairing address/port shown on the TV, then connect using
+its separate connection address/port. Pairing codes and connection ports are temporary; do not
+publish them. Turn debugging off after setup/verification if no longer needed.
 
 ## One-time permissions
 
@@ -80,14 +84,18 @@ part of Hume). Download `app-release.apk` from its
 adb install -r app-release.apk
 ```
 
-Open it once from Hume, set a name (e.g. "Mi Box") in its Settings and keep *Start on boot* on. The
-TV then appears in AirPlay on Apple devices on the same Wi-Fi. Hume's AirPlay guard keeps it visible
-after the TV sleeps ([features](features.md#airplay-with-the-airplay-server-app)). Tested with
-version 0.0.36 on a Mi Box (Android 12) and an Android 9 TV.
+Open **Settings → AirPlay receiver** in Hume (or the receiver's app tile), choose its name and
+approve its own permission prompts. Configure start-on-boot/background operation in that app.
+The fork targets the separate official 0.0.36 APK; verify its published digest/signature and ABI.
+No GPL receiver code is bundled into Apache-licensed Hume.
+
+Hume does not request DUMP or silently restart/reconfigure the receiver: 0.0.36 protects those
+settings broadcasts. Test real mirroring/audio/video from an Apple client, including disconnect,
+wake and reboot. Advertisement alone is not playback proof; DRM compatibility is not promised.
 
 ## Undo
 
-```sh
-adb shell pm enable com.google.android.tvlauncher     # bring back the stock launcher
-adb uninstall com.petrobot.hume
-```
+Turn off Hume Madrid in the TV's Accessibility settings to stop its Home override. Google TV
+Home remains installed/enabled. If desired, uninstall Hume Madrid through the ordinary app
+settings; this deletes its local settings. The separate AirPlay receiver can be removed separately.
+Never remove a replacement Home while the stock Home is disabled. This fork does not disable it.

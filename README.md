@@ -1,4 +1,19 @@
-# Hume Launcher
+# Hume Madrid
+
+Spain/Madrid fork of [Hume Launcher by Petrobot](https://github.com/petrobot-admin/hume-launcher).
+Search and JustWatch/TMDB recommendations use Spain availability and Spanish metadata.
+Madrid/Celsius are initial weather defaults; explicit location/unit choices are preserved.
+News covers Spain, fixed Madrid local news and the world (El País / 20 Minutos).
+Stremio/Cinemeta remains a global catalogue, not a Spain availability check.
+The interface is not a full Spanish translation.
+
+AirPlay uses the separate [AirPlay Server](https://github.com/jqssun/android-airplay-server)
+app. Settings offers **AirPlay receiver** to open/setup it. No background repair, DUMP permission,
+shell client or new launcher runtime library is added. Google TV Home/setup remain enabled.
+
+Fork build/check commands and current verification requirements: [.agents/validation.md](.agents/validation.md).
+Fork APKs use the fork's own signing key; they cannot update an upstream-signed install in place.
+The screenshots below are upstream layout illustrations, not verification of this fork.
 
 A tvOS 26–style home screen for Android TV, by Petrobot. It replaces the stock launcher with one
 modelled on Apple TV — glass dock, full-screen carousel, Control Center, profiles — and is built to
@@ -12,12 +27,12 @@ runtime libraries; the APK is about 1 MB.
 - **Home**: Liquid Glass dock, 6-across app grid in Apple's measured proportions, focus lift and
   zoom-to-open, More Apps folder, five backgrounds.
 - **Carousel**: Continue Watching first (apps' Watch Next lists, Android TV 8+; Resume opens the
-  episode), then Indian news
-  (India, your city, world) and rotating recommendations from your streaming services. Goes full
+  episode), then Spanish news
+  (Spain, Madrid, world) and rotating recommendations from your streaming services. Goes full
   screen when Home is idle.
 - **Status row**: internet indicator, time, Refresh, Search, Control Center, profile avatar.
 - **Search**: apps, settings and inputs instantly, plus movies and shows on every streaming service
-  in India (Indian titles included, typed in English or Hindi, or spoken) with **Open** in the app
+  in Spain (Spanish metadata, Spanish-character keyboard and es-ES dictation hints) with **Open** in the app
   you have or **Get** for the one you don't.
 - **Weather**: a glass pill with a 5-day forecast panel (Open-Meteo, MET Norway or wttr.in — no keys).
 - **Control Center**: Power Off, Memory/Clean, Wi-Fi, Do Not Disturb, audio, sleep timer, inputs,
@@ -29,7 +44,8 @@ runtime libraries; the APK is about 1 MB.
 - **First-time setup** in Apple's style, **multi-page Settings**, permissions asked **on screen**
   (adb only as a last resort), system or carousel **screensaver**, and Android TV navigation sounds.
 - **AirPlay**: works with the open-source [AirPlay Server](https://github.com/jqssun/android-airplay-server)
-  app; Hume keeps the receiver visible to Macs and iPhones after the TV sleeps.
+  app; open it from Hume's settings to manage its own startup and permissions. Wake/reboot
+  recovery depends on that receiver and the TV; Hume does not silently restart it.
 
 Full list with screenshots: **[docs/features.md](docs/features.md)**.
 
@@ -56,8 +72,9 @@ adb shell am start -n com.petrobot.hume/.MainActivity
 
 ## Requirements
 
-Android TV 7.0+ (API 24). Developed and tested on a Xiaomi Mi Box 4 (Android 12) and an Android 9
-TV with 1 GB RAM.
+The build retains Android TV 7.0+ (API 24). Upstream reports testing on a Xiaomi Mi Box 4
+(Android 12) and an Android 9 TV with 1 GB RAM; those are not Madrid-fork test results.
+Fork-specific device verification and outstanding gates are recorded in [.agents/validation.md](.agents/validation.md).
 
 ## License
 
@@ -66,4 +83,4 @@ Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 ## Credits
 
 Inter font (SIL OFL) · Nayuki QR Code generator (MIT) · weather from Open-Meteo, MET Norway and
-wttr.in · recommendations from JustWatch / TMDB / Stremio Cinemeta · news from Indian newsrooms' public RSS feeds.
+wttr.in · recommendations from JustWatch / TMDB / Stremio Cinemeta · news from El País and 20 Minutos public RSS feeds.

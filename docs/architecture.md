@@ -16,8 +16,8 @@ source (Nayuki, MIT) under `src/io/nayuki/qrcodegen`.
 | `SetupActivity.java` | First-time setup pages (Apple-style, one question per page) |
 | `SettingsActivity.java` | All settings, tvOS list layout |
 | `Suggestions.java` | JustWatch / TMDB / Stremio (Cinemeta) recommendations: fetch, cache, artwork, deep links |
-| `Search.java` | Search data: JustWatch title search (every service in India) and Cinemeta, matching each service to its installed app, Open / Get, recent searches |
-| `SearchPanel.java` | The search screen: one-row keyboard (English, digits, Hindi, voice), Apps & Settings and Movies & TV rows, the How to Watch sheet |
+| `Search.java` | Search data: JustWatch title search (Spain service availability) and Cinemeta, matching each service to its installed app, Open / Get, recent searches |
+| `SearchPanel.java` | The search screen: one-row keyboard (Latin, digits, Spanish accents, voice), Apps & Settings and Movies & TV rows, the How to Watch sheet |
 | `WatchNext.java` | Continue Watching: apps' Watch Next rows (TV provider); ranking, Resume links, Remove |
 | `AppRows.java` | Apps' own preview rows (TV provider channels and programs): one channel per app, resume channels to Continue Watching, 2-minute cache |
 | `Carousel.java` | Composes the carousel: Continue Watching, then app rows and recommendations/news 1:2, de-duplicated by title, app items rotated every 2 h |
@@ -28,13 +28,14 @@ source (Nayuki, MIT) under `src/io/nayuki/qrcodegen`.
 | `Profiles.java` | Profiles (max 3), unique emoji avatars, per-profile storage names |
 | `SleepReceiver.java` | Sleep via device admin (or PowerService); sleep timer alarm |
 | `Inputs.java` | TV inputs from the TV input framework; switching via the passthrough channel URI |
-| `News.java` | News for the top shelf: Indian newsrooms' RSS (India, local city, world), images, freshness |
+| `News.java` | News for the top shelf: Spanish RSS (Spain, fixed Madrid local feed, world), images, freshness |
 | `Perms.java` | On-screen permission and default-home requests, with adb only as a last resort |
 | `Weather.java` | Forecast from Open-Meteo, MET Norway or wttr.in (with fallback) in one format, IP location / city search, cache, refresh schedule |
 | `WeatherView.java`, `WeatherIcons.java` | Weather overview card and forecast panel (drawn in code), multicolour weather icons |
 | `Clicks.java` | Navigation sounds (Android TV system sound effects at 60%) |
 | `PowerService.java` | Accessibility service the user turns on: sleep (Power Off / Sleep Timer) where device admin is unavailable; Force stop for Clean |
-| `AirPlayGuard.java` | Keeps the AirPlay receiver app visible: mDNS check, restart via its settings / start-up receivers |
+| `AirPlay.java` | Explicit open/setup of the separate receiver; no polling, DUMP or silent repair |
+| `Regional.java` | Spain metadata defaults, idempotent selection migration and Madrid weather seeding |
 | `Glyphs.java` | Line glyphs drawn in code (Control Center, Presentation tile, inputs, refresh) |
 | `Ui.java` | Resolution-based sizing (960×540 design grid), fonts |
 | `present/Presenter.java` | Presentation entry point: settings, server lifecycle, player bridge, boot start |
@@ -65,7 +66,7 @@ source (Nayuki, MIT) under `src/io/nayuki/qrcodegen`.
   media-session history caught trailers and music, couldn't open the episode, and is blocked on
   low-RAM TVs, so it was removed (its saved files are deleted on first run).
 
-- **Search without a list of services.** JustWatch says which services in India have a title and
+- **Search without a list of services.** JustWatch says which services in Spain have a title and
   gives each one's links; Hume finds the app for each service itself (the package in the Android
   TV link, an installed non-browser handler of the web link, a remembered match, or an installed
   app with the same name), so new services need no update. Android 11+ hides other apps unless
@@ -81,7 +82,23 @@ source (Nayuki, MIT) under `src/io/nayuki/qrcodegen`.
   prompt. The remotes' Assistant key is routed by Android to Google Assistant before apps, so the
   remote shortcut is holding Back for 1 s (Back is replayed when released sooner).
 
+## Regional fork boundaries
+
+Spain requests share regional country/language constants; original-language filtering remains
+optional. Content/genre cache filenames include `es_v1`, so old Indian data is never read as
+Spanish content. A one-time preference migration intersects selected provider/language/newsroom
+IDs with the supported lists; removed-only service/news selections use current defaults, removed-only
+language filters become unrestricted, and intentionally empty selections remain empty. Credentials,
+profiles, shelf choices and recent searches are not reset.
+
+Weather seeds Madrid/Celsius only when the manual/automatic choice is absent. Explicit choices
+(including automatic, disabled weather and custom units) are preserved. Cache keys are checked
+before presenting a saved forecast. Forecast display still follows the device timezone; no system
+clock change is made. Madrid local news is fixed and is not relabeled after a weather-city change.
+
 ## Performance (Mi Box, Mali-450 MP, GLES 2.0)
+
+The timings below are historical upstream measurements, not reproduced Madrid-fork benchmarks.
 
 - Startup: the app list (package manager, banners, icon colours) and the wallpaper are prepared on
   background threads while the window's views are built: cold start ~1.0 s → ~0.86 s on a 1 GHz

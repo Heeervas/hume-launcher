@@ -3,3 +3,8 @@ signing.keystore
 debug.keystore
 *.jks
 keystore-password.txt
+.agents/pmd-findings.json
+.agents/pmd-raw.json
+.agents/pmd-inputs.txt
+.agents/quality-report.json
+checks/scratch/
